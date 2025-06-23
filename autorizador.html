@@ -141,20 +141,35 @@
       }
 
       async function cargarVisitas() {
-        clearColumns();
-        try {
-          const res = await fetch(`${BASE}/visitas-pendientes`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data = await res.json();
-          data.forEach(v => visitasMap.set(v.Id_Visita, v));
-          data.forEach(v => {
-            const column = v.Status === 'Autorizada' ? authEl : pendingEl;
-            column.appendChild(createCard(v));
-          });
-        } catch (e) {
-          console.error('Error cargarVisitas:', e);
-        }
-      }
+  clearColumns();
+  try {
+    const res = await fetch(`${BASE}/visitas-pendientes`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    data.forEach(v => visitasMap.set(v.Id_Visita, v));
+
+    // Sólo pendientes
+    data
+      .filter(v => v.Status === 'Pendiente')
+      .forEach(v => {
+        const card = createCard(v);
+        pendingEl.appendChild(card);
+      });
+
+    // Sólo autorizadas
+    data
+      .filter(v => v.Status === 'Autorizada')
+      .forEach(v => {
+        const card = createCard(v);
+        authEl.appendChild(card);
+      });
+
+  } catch (e) {
+    console.error('Error cargarVisitas:', e);
+  }
+}
+
 
       document.addEventListener('DOMContentLoaded', cargarVisitas);
     })();
