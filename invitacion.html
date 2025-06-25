@@ -6,8 +6,8 @@
   <style>
     body { font-family: sans-serif; margin:0; padding:0; }
     .header { background:#2d3038; color:white; padding:1em; text-align:center; }
-    .field { margin:1em; }
-    .qr    { text-align:center; margin-top:2em; }
+    .field  { margin:1em; }
+    .qr     { text-align:center; margin-top:2em; }
   </style>
 </head>
 <body>
@@ -21,9 +21,8 @@
   <div class="field"><strong>Hora:</strong> 12:30</div>
   <div class="field"><strong>Ubicación:</strong> PRIV VILLA CATANIA 128, FRACC LA CANTERA 38115, CELAYA, GTO.</div>
   <div class="qr">
-    <!-- Aquí llamamos directo a Google Charts para generar el QR -->
     <img
-      src="https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=1750876651599-otlkopws"
+      src="https://api.qrserver.com/v1/create-qr-code/?data=1750876651599-otlkopws&size=200x200"
       alt="Código QR"
       width="200"
     />
