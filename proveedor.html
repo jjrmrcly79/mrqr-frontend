@@ -1,4 +1,3 @@
-<!-- proveedor.html con ID precargado desde URL -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,15 +8,18 @@
   <style>
     body { background-color: #f2f2f2; }
     .container { max-width: 600px; margin-top: 40px; }
+    .spinner-border-sm {
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h2 class="mb-4">Validación de Identidad del Proveedor</h2>
+    
     <form id="proveedorForm" enctype="multipart/form-data">
       <div class="mb-3">
         <label class="form-label">Folio de visita (Id_Visita)</label>
-        <!-- este input recibirá el idVisita de la URL -->
         <input 
           type="text" 
           class="form-control" 
@@ -27,17 +29,35 @@
           required
         >
       </div>
+
       <div class="mb-3">
         <label class="form-label">Sube tu INE (foto)</label>
         <input type="file" class="form-control" name="ine" accept="image/*" required>
       </div>
+
       <div class="mb-3">
         <label class="form-label">Sube foto de tu unidad (con placas visibles)</label>
         <input type="file" class="form-control" name="unidad" accept="image/*" required>
       </div>
-      <button type="submit" class="btn btn-primary">Subir y validar</button>
+
+      <!-- Barra de carga -->
+      <div id="progressContainer" class="progress my-3 d-none">
+        <div 
+          class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+          role="progressbar" 
+          style="width: 100%">
+          Procesando...
+        </div>
+      </div>
+
+      <button id="submitBtn" type="submit" class="btn btn-primary">
+        <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        <span id="btnText">Subir y validar</span>
+      </button>
     </form>
+
     <div id="respuesta" class="mt-4"></div>
+
     <div class="text-center mt-5">
       <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
     </div>
@@ -45,40 +65,59 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // 1) Leer parámetro idVisita de la URL
       const params = new URLSearchParams(window.location.search);
       const id = params.get("idVisita");
       if (id) {
-        // 2) Rellenar el campo del formulario
         document.getElementById("idVisita").value = id;
       }
     });
 
     const form = document.getElementById('proveedorForm');
     const respuesta = document.getElementById('respuesta');
+    const submitBtn = document.getElementById('submitBtn');
+    const progress = document.getElementById('progressContainer');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      // Activar spinner, desactivar botón
+      submitBtn.disabled = true;
+      spinner.classList.remove("d-none");
+      btnText.textContent = "⌛ Enviando...";
+      progress.classList.remove("d-none");
+
       const formData = new FormData(form);
 
-      // 3) Enviar idVisita + archivos al webhook
-      const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/proveedor-subida', {
-        method: 'POST',
-        body: formData
-      });
+      try {
+        const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/proveedor-subida', {
+          method: 'POST',
+          body: formData
+        });
 
-      if (res.ok) {
-        try {
-          const result = await res.json();
-          respuesta.innerHTML = `<div class="alert alert-success">${result.mensaje}</div>`;
-        } catch {
-          respuesta.innerHTML = `<div class="alert alert-success">Documentos enviados correctamente.</div>`;
+        if (res.ok) {
+          try {
+            const result = await res.json();
+            respuesta.innerHTML = `<div class="alert alert-success">${result.mensaje}</div>`;
+          } catch {
+            respuesta.innerHTML = `<div class="alert alert-success">Documentos enviados correctamente.</div>`;
+          }
+          form.reset();
+        } else {
+          respuesta.innerHTML = `<div class="alert alert-danger">Ocurrió un error al subir los documentos.</div>`;
         }
-        form.reset();
-      } else {
-        respuesta.innerHTML = `<div class="alert alert-danger">Ocurrió un error al subir los documentos.</div>`;
+      } catch (error) {
+        respuesta.innerHTML = `<div class="alert alert-danger">Error de red: ${error.message}</div>`;
       }
+
+      // Restaurar botón
+      submitBtn.disabled = false;
+      spinner.classList.add("d-none");
+      btnText.textContent = "Subir y validar";
+      progress.classList.add("d-none");
     });
   </script>
 </body>
 </html>
+
