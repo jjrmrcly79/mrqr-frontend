@@ -14,12 +14,11 @@
 <body>
   <div class="container">
     <header class="text-center">
-      <img src="logo.svg" alt="Logo">
+      <img id="logoDinamico" src="" alt="Logo">
       <h2 class="mb-4">Registro de Visita</h2>
     </header>
 
     <form action="https://jjrmrcly.app.n8n.cloud/webhook/02f58aa2-dec3-4f85-ad44-d47ea23071f7" method="POST">
-      <!-- Selector de proveedor -->
       <div class="mb-3">
         <label class="form-label">Nombre del proveedor</label>
         <select class="form-select" name="nombreProveedor" id="proveedorSelect" required disabled>
@@ -27,10 +26,16 @@
         </select>
       </div>
 
-      <!-- Dirección autocompletada -->
       <div class="mb-3">
         <label class="form-label">Dirección del proveedor</label>
         <input type="text" class="form-control" id="direccionProveedor" readonly>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Ubicación en Google Maps</label>
+        <div class="ratio ratio-16x9">
+          <iframe id="mapaProveedor" src="" style="border:0;" allowfullscreen loading="lazy"></iframe>
+        </div>
       </div>
 
       <div class="mb-3">
@@ -74,6 +79,11 @@
       return saved?.text || null;
     }
 
+    function getLogoDesdeStorage() {
+      const saved = JSON.parse(localStorage.getItem("selectedClient") || "null");
+      return saved?.logo || "";
+    }
+
     async function cargarProveedores() {
       const cliente = getClienteDesdeStorage();
       const select = document.getElementById("proveedorSelect");
@@ -89,7 +99,7 @@
           ? data.filter(p => p.cliente?.toLowerCase() === cliente.toLowerCase())
           : data;
 
-        select.innerHTML = ""; // limpia opciones previas
+        select.innerHTML = "";
 
         if (filtrados.length === 0) {
           const option = document.createElement("option");
@@ -124,9 +134,14 @@
       const proveedor = proveedoresData.find(p => p.nombre === nombreSeleccionado);
 
       document.getElementById("direccionProveedor").value = proveedor?.direccion || "";
+      document.getElementById("mapaProveedor").src = proveedor?.enlace || "";
     });
 
-    window.addEventListener("DOMContentLoaded", cargarProveedores);
+    window.addEventListener("DOMContentLoaded", () => {
+      cargarProveedores();
+      const logo = getLogoDesdeStorage();
+      document.getElementById("logoDinamico").src = logo;
+    });
 
     const form = document.querySelector("form");
     const container = document.querySelector(".container");
