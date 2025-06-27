@@ -198,13 +198,19 @@
       dirInput.value = proveedor?.direccion || "";
       dirInput.classList.add("highlight");
 
-      if (proveedor?.direccion) updateMapByAddress(proveedor.direccion);
+      if (!proveedor || !proveedor.direccion) {
+        initMap(); // Reinicia el mapa si no hay proveedor válido
+        return;
+      }
+
+      updateMapByAddress(proveedor.direccion);
     });
 
     window.addEventListener("DOMContentLoaded", () => {
       cargarProveedores();
       document.getElementById("logo").src = getLogoDesdeStorage();
       document.getElementById("fechaVisita").value = new Date().toISOString().split("T")[0];
+      initMap();
     });
 
     const form = document.querySelector("form");
@@ -239,9 +245,10 @@
     });
   </script>
 
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-rPfCzPnAzjJA80aMcgned6taca2bSuU&callback=initMap"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-rPfCzPnAzjJA80aMcgned6taca2bSuU"></script>
 </body>
 </html>
+
 
 
 
