@@ -1,4 +1,3 @@
-<!-- registro_usuario.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -14,34 +13,55 @@
 <body>
   <div class="container">
     <h2 class="mb-4">Registro de Visita</h2>
-    
+
     <form action="https://jjrmrcly.app.n8n.cloud/webhook/02f58aa2-dec3-4f85-ad44-d47ea23071f7" method="POST">
-      
-      
+      <!-- Selector de proveedor -->
       <div class="mb-3">
         <label class="form-label">Nombre del proveedor</label>
-        <input type="text" class="form-control" name="nombreProveedor" required>
+        <select class="form-select" name="nombreProveedor" id="proveedorSelect" required>
+          <option value="">Selecciona un proveedor...</option>
+        </select>
       </div>
+
+      <!-- Dirección autocompletada -->
+      <div class="mb-3">
+        <label class="form-label">Dirección del proveedor</label>
+        <input type="text" class="form-control" id="direccionProveedor" readonly>
+      </div>
+
+      <!-- Mapa embebido -->
+      <div class="mb-3">
+        <label class="form-label">Ubicación en Google Maps</label>
+        <div class="ratio ratio-16x9">
+          <iframe id="mapaProveedor" src="" style="border:0;" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
       <div class="mb-3">
         <label class="form-label">Correo del proveedor</label>
         <input type="email" class="form-control" name="correoProveedor" required>
       </div>      
+
       <div class="mb-3">
         <label class="form-label">Fecha de visita</label>
         <input type="date" class="form-control" name="fechaVisita" required>
       </div>
+
       <div class="mb-3">
         <label class="form-label">Hora de visita</label>
         <input type="time" class="form-control" name="horaVisita" required>
       </div>
+
       <div class="mb-3">
         <label class="form-label">Área o Departamento</label>
         <input type="text" class="form-control" name="motivoVisita">
       </div>
+
       <div class="mb-3">
-        <label class="form-label">Tú Correo electrónico</label>
+        <label class="form-label">Tu correo electrónico</label>
         <input type="email" class="form-control" name="correoUsuario" required>
       </div>      
+
       <button type="submit" class="btn btn-primary">Enviar solicitud</button>
     </form>
   </div>
@@ -51,6 +71,61 @@
   </div>
 
   <script>
+    let proveedoresData = [];
+
+    function getClienteDesdeStorage() {
+      const saved = JSON.parse(localStorage.getItem("selectedClient") || "null");
+      return saved?.text || null;
+    }
+
+    async function cargarProveedores() {
+      const cliente = getClienteDesdeStorage();
+      const select = document.getElementById("proveedorSelect");
+      try {
+        const res = await fetch("https://jjrmrcly.app.n8n.cloud/webhook/lista-proveedores");
+        const data = await res.json();
+        proveedoresData = data;
+
+        const filtrados = cliente
+          ? data.filter(p => p.cliente?.toLowerCase() === cliente.toLowerCase())
+          : data;
+
+        if (filtrados.length === 0) {
+          const option = document.createElement("option");
+          option.textContent = "❌ No hay proveedores disponibles para este cliente.";
+          option.disabled = true;
+          option.selected = true;
+          select.appendChild(option);
+          select.disabled = true;
+        } else {
+          filtrados.forEach(p => {
+            const option = document.createElement("option");
+            option.value = p.nombre;
+            option.textContent = p.nombre;
+            select.appendChild(option);
+          });
+        }
+      } catch (err) {
+        console.error("Error cargando proveedores:", err);
+      }
+    }
+
+    document.getElementById("proveedorSelect").addEventListener("change", function () {
+      const nombreSeleccionado = this.value;
+      const proveedor = proveedoresData.find(p => p.nombre === nombreSeleccionado);
+
+      if (proveedor) {
+        document.getElementById("direccionProveedor").value = proveedor.direccion || "";
+        const mapa = document.getElementById("mapaProveedor");
+        mapa.src = proveedor.enlace?.replace("/maps", "/maps/embed") || "";
+      } else {
+        document.getElementById("direccionProveedor").value = "";
+        document.getElementById("mapaProveedor").src = "";
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", cargarProveedores);
+
     const form = document.querySelector("form");
     const container = document.querySelector(".container");
 
@@ -63,32 +138,25 @@
         body: formData,
       });
 
-      if (res.ok) {
-        try {
-          const result = await res.json();
-          container.innerHTML = `
-            <div class="alert alert-success mt-5">${result.mensaje}</div>
-            <div class="text-center mt-4">
-              <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
-            </div>
-          `;
-        } catch (err) {
-          container.innerHTML = `
-            <div class="alert alert-success mt-5">Solicitud registrada correctamente.</div>
-            <div class="text-center mt-4">
-              <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
-            </div>
-          `;
-        }
-      } else {
+      const result = await res.json();
+      if (result.autorizado === false) {
         container.innerHTML = `
-          <div class="alert alert-danger mt-5">Ocurrió un error al enviar la solicitud.</div>
+          <div class="alert alert-warning mt-5">${result.mensaje}</div>
           <div class="text-center mt-4">
             <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
           </div>
         `;
+        return;
       }
+
+      container.innerHTML = `
+        <div class="alert alert-success mt-5">${result.mensaje || 'Solicitud registrada correctamente.'}</div>
+        <div class="text-center mt-4">
+          <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
+        </div>
+      `;
     });
   </script>
 </body>
 </html>
+
