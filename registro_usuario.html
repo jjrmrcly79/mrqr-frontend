@@ -29,14 +29,6 @@
         <input type="text" class="form-control" id="direccionProveedor" readonly>
       </div>
 
-      <!-- Mapa embebido -->
-      <div class="mb-3">
-        <label class="form-label">Ubicación en Google Maps</label>
-        <div class="ratio ratio-16x9">
-          <iframe id="mapaProveedor" src="" style="border:0;" allowfullscreen loading="lazy"></iframe>
-        </div>
-      </div>
-
       <div class="mb-3">
         <label class="form-label">Correo del proveedor</label>
         <input type="email" class="form-control" name="correoProveedor" required>
@@ -119,11 +111,8 @@
 
       if (proveedor) {
         document.getElementById("direccionProveedor").value = proveedor.direccion || "";
-        const mapa = document.getElementById("mapaProveedor");
-        mapa.src = proveedor.enlace?.replace("/maps", "/maps/embed") || "";
       } else {
         document.getElementById("direccionProveedor").value = "";
-        document.getElementById("mapaProveedor").src = "";
       }
     });
 
