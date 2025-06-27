@@ -83,7 +83,10 @@
       const select = document.getElementById("proveedorSelect");
       try {
         const res = await fetch("https://corsproxy.io/?https://jjrmrcly.app.n8n.cloud/webhook/lista-proveedores");
-        const data = await res.json();
+        const text = await res.text();
+        console.log("Respuesta cruda:", text);
+        const data = JSON.parse(text);
+
         proveedoresData = data;
 
         const filtrados = cliente
