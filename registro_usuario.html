@@ -210,8 +210,7 @@
       cargarProveedores();
       document.getElementById("logo").src = getLogoDesdeStorage();
       document.getElementById("fechaVisita").value = new Date().toISOString().split("T")[0];
-      initMap();
-    });
+          });
 
     const form = document.querySelector("form");
     const container = document.querySelector(".container");
@@ -245,9 +244,10 @@
     });
   </script>
 
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-rPfCzPnAzjJA80aMcgned6taca2bSuU"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-rPfCzPnAzjJA80aMcgned6taca2bSuU&callback=initMap" defer></script>
 </body>
 </html>
+
 
 
 
