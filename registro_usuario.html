@@ -9,12 +9,39 @@
     body { background: #f8f9fa; }
     .container { max-width: 600px; margin-top: 40px; }
     header img { height: 60px; margin-bottom: 20px; }
+    .btn-primary, .btn-secondary {
+      padding: 12px 20px;
+      font-size: 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: transform 0.1s ease-in-out;
+    }
+    .btn-primary:hover, .btn-secondary:hover {
+      transform: scale(1.03);
+    }
+    .disclaimer {
+      margin-top: 60px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    #direccionProveedor.highlight {
+      background: #e7f7ec;
+      border-left: 5px solid #198754;
+      padding-left: 10px;
+    }
+    #mapaProveedor {
+      width: 100%;
+      height: 360px;
+      border: 0;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header class="text-center">
-      <img id="logoDinamico" src="" alt="Logo">
+      <img id="logo" src="" alt="Logo">
       <h2 class="mb-4">Registro de Visita</h2>
     </header>
 
@@ -33,19 +60,17 @@
 
       <div class="mb-3">
         <label class="form-label">Ubicación en Google Maps</label>
-        <div class="ratio ratio-16x9">
-          <iframe id="mapaProveedor" src="" style="border:0;" allowfullscreen loading="lazy"></iframe>
-        </div>
+        <iframe id="mapaProveedor" src="" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Correo del proveedor</label>
         <input type="email" class="form-control" name="correoProveedor" required>
-      </div>      
+      </div>
 
       <div class="mb-3">
         <label class="form-label">Fecha de visita</label>
-        <input type="date" class="form-control" name="fechaVisita" required>
+        <input type="date" class="form-control" name="fechaVisita" id="fechaVisita" required>
       </div>
 
       <div class="mb-3">
@@ -61,13 +86,17 @@
       <div class="mb-3">
         <label class="form-label">Tu correo electrónico</label>
         <input type="email" class="form-control" name="correoUsuario" required>
-      </div>      
+      </div>
 
-      <button type="submit" class="btn btn-primary">Enviar solicitud</button>
+      <button type="submit" class="btn btn-primary w-100">📩 Enviar solicitud</button>
     </form>
 
-    <div class="text-center mt-5">
-      <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
+    <div class="text-center mt-4">
+      <a href="index.html" class="btn btn-secondary w-100">🔙 Volver a Demo</a>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ Este formulario es parte de una demostración interna. Información confidencial. Prohibida su reproducción.
     </div>
   </div>
 
@@ -81,7 +110,7 @@
 
     function getLogoDesdeStorage() {
       const saved = JSON.parse(localStorage.getItem("selectedClient") || "null");
-      return saved?.logo || "";
+      return saved?.logo || "logos/Logo1.png";
     }
 
     async function cargarProveedores() {
@@ -133,14 +162,17 @@
       const nombreSeleccionado = this.value;
       const proveedor = proveedoresData.find(p => p.nombre === nombreSeleccionado);
 
-      document.getElementById("direccionProveedor").value = proveedor?.direccion || "";
+      const dirInput = document.getElementById("direccionProveedor");
+      dirInput.value = proveedor?.direccion || "";
+      dirInput.classList.add("highlight");
+
       document.getElementById("mapaProveedor").src = proveedor?.enlace || "";
     });
 
     window.addEventListener("DOMContentLoaded", () => {
       cargarProveedores();
-      const logo = getLogoDesdeStorage();
-      document.getElementById("logoDinamico").src = logo;
+      document.getElementById("logo").src = getLogoDesdeStorage();
+      document.getElementById("fechaVisita").value = new Date().toISOString().split("T")[0];
     });
 
     const form = document.querySelector("form");
@@ -160,7 +192,7 @@
         container.innerHTML = `
           <div class="alert alert-warning mt-5">${result.mensaje}</div>
           <div class="text-center mt-4">
-            <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
+            <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
           </div>
         `;
         return;
@@ -169,13 +201,14 @@
       container.innerHTML = `
         <div class="alert alert-success mt-5">${result.mensaje || 'Solicitud registrada correctamente.'}</div>
         <div class="text-center mt-4">
-          <a href="index.html" class="btn btn-secondary">🔙 Regresar al inicio</a>
+          <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
         </div>
       `;
     });
   </script>
 </body>
 </html>
+
 
 
 
