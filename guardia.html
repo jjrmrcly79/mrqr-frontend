@@ -4,20 +4,74 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Validación Guardia</title>
+  <!-- Google Font Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
   <style>
-    body { background-color: #eef1f4; }
-    .container-fluid { margin-top: 20px; }
-    .panel { height: 75vh; overflow-y: auto; padding: 15px; background: #fff; border: 1px solid #ccc; margin-bottom: 20px; }
-    .panel h4 { margin-bottom: 15px; }
-    .highlight { background-color: #d4edda !important; }
-    .card-header i { margin-right: 5px; }
+    body {
+      background: url('logos/fondo.png') center center no-repeat;
+      background-size: cover;
+      font-family: 'Montserrat', sans-serif;
+    }
+    header {
+      text-align: center;
+      background: rgba(255,255,255,0.9);
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    header img {
+      max-height: 60px;
+    }
+    .container-fluid {
+      background: rgba(255,255,255,0.9);
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .panel {
+      height: 75vh;
+      overflow-y: auto;
+      padding: 15px;
+      background: #fff;
+      border-radius: .5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .panel h4 {
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: #800000;
+    }
+    .list-group-item-action {
+      cursor: pointer;
+    }
+    .highlight {
+      background-color: #d4edda !important;
+    }
+    .btn {
+      font-weight: 600;
+      border-radius: .5rem;
+      transition: transform .1s ease-in-out;
+    }
+    .btn:hover {
+      transform: scale(1.02);
+    }
+    .text-center a.btn {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
   </style>
 </head>
 <body>
+  <!-- Header con logo dinámico -->
+  <header>
+    <img id="client-logo" src="" alt="Logo Cliente" />
+  </header>
+
   <div class="container-fluid">
     <div class="row">
       <!-- Columna de búsqueda y detalle -->
@@ -30,7 +84,7 @@
               <input type="text" class="form-control" id="folio" placeholder="Ej: 20240619-abc123" required />
             </div>
             <button class="btn btn-info w-100" type="submit">
-              <i class="bi bi-arrow-right-circle"></i> Buscar
+              <i class="bi bi-arrow-right-circle"></i> Buscar 🔍
             </button>
           </form>
         </div>
@@ -53,37 +107,23 @@
     </div>
     <div class="text-center">
       <a href="index.html" class="btn btn-secondary">
-        <i class="bi bi-arrow-left-circle"></i> Regresar al inicio
+        <i class="bi bi-arrow-left-circle"></i> 🔙 Regresar al inicio
       </a>
     </div>
   </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    function normalize(value) {
-      let s = String(value || '').trim();
-      if (s.startsWith('=')) s = s.slice(1);
-      return s.trim();
-    }
-    // Registrar entrada o salida
-    async function registrarAcceso(id, tipo) {
-      try {
-        const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/registro-acceso', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idVisita: id, tipo })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const { mensaje } = await res.json();
-        // Reset UI
-        document.getElementById('folio').value = '';
-        document.getElementById('resultadoVisita').innerHTML = '';
-        // Recargar listas
-        await cargarListas();
-        alert(mensaje);
-      } catch (err) {
-        console.error('Error registrarAcceso:', err);
-        alert('Error al registrar ' + tipo);
-      }
+    // Función para cargar logo dinámico
+    function getLogoDesdeStorage() {
+      const saved = JSON.parse(localStorage.getItem('selectedClient') || 'null');
+      return saved ? `logos/${saved.value}.png` : 'logos/Logo1.png';
     }
     document.addEventListener('DOMContentLoaded', () => {
+      // Ajustar logo en header
+      document.getElementById('client-logo').src = getLogoDesdeStorage();
+      // Resto de inicialización
       document.getElementById('buscarForm').addEventListener('submit', async e => {
         e.preventDefault();
         const id = document.getElementById('folio').value.trim();
@@ -91,14 +131,40 @@
       });
       cargarListas();
     });
-    // Mostrar detalles de una visita
+
+    // Normaliza valores
+    function normalize(value) {
+      let s = String(value || '').trim();
+      if (s.startsWith('=')) s = s.slice(1);
+      return s.trim();
+    }
+
+    // Registrar entrada o salida
+    async function registrarAcceso(id, tipo) {
+      try {
+        const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/registro-acceso', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idVisita: id, tipo })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { mensaje } = await res.json();
+        document.getElementById('folio').value = '';
+        document.getElementById('resultadoVisita').innerHTML = '';
+        await cargarListas();
+        alert(mensaje);
+      } catch (err) {
+        console.error('Error registrarAcceso:', err);
+        alert('Error al registrar ' + tipo);
+      }
+    }
+
+    // Mostrar detalles de visita
     async function mostrarVisita(id) {
       const cont = document.getElementById('resultadoVisita');
       cont.innerHTML = `<div class="alert alert-secondary">Cargando <strong>${id}</strong>…</div>`;
       try {
-        const res = await fetch(
-          `https://jjrmrcly.app.n8n.cloud/webhook/buscar-visita?id=${encodeURIComponent(id)}`
-        );
+        const res = await fetch(`https://jjrmrcly.app.n8n.cloud/webhook/buscar-visita?id=${encodeURIComponent(id)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const statusRaw = normalize(data.status || data.Status);
@@ -112,14 +178,13 @@
               <div class="card-body">
                 <p>La visita <strong>${id}</strong> ya está en planta.</p>
                 <button id="exitBtn" class="btn btn-dark">
-                  <i class="bi bi-door-closed"></i> Registrar salida
+                  <i class="bi bi-door-closed"></i> Registrar salida 🚪
                 </button>
               </div>
             </div>`;
           document.getElementById('exitBtn').onclick = () => registrarAcceso(id, 'salida');
           return;
         }
-        // Mostrar entrada
         const nombre = normalize(data.nombre);
         const placas = normalize(data.placas);
         const fecha = normalize(data.fecha);
@@ -137,7 +202,7 @@
             </ul>
             <div class="card-body text-end">
               <button id="actionBtn" class="btn btn-success">
-                <i class="bi bi-door-open"></i> Registrar entrada
+                <i class="bi bi-door-open"></i> Registrar entrada 🚪
               </button>
             </div>
           </div>`;
@@ -147,11 +212,11 @@
         cont.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> No se encontró la visita <strong>${id}</strong>.</div>`;
       }
     }
-    // Carga y separa visitas por status
+
+    // Cargar y renderizar listas
     async function cargarListas() {
       try {
         const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/visitas-pendientes');
-        console.log('Fetch visitas-pendientes status:', res.status);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const arr = await res.json();
         const autorizadas = arr.filter(v => normalize(v.status || v.Status).toLowerCase() === 'autorizada');
@@ -164,6 +229,7 @@
         document.getElementById('listaActivos').innerHTML = `<div class="text-danger">Error al cargar en planta.</div>`;
       }
     }
+
     // Renderizar lista genérica
     function renderList(containerId, items, actionType) {
       const list = document.getElementById(containerId);
