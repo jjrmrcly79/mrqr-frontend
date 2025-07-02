@@ -224,7 +224,12 @@
       async function handleAction(id, type, card) {
         const visita = visitasMap.get(id);
         const url = `${BASE}/${type}-visita`;
-        const payload = { idVisita: id };
+        const selectedClient = JSON.parse(localStorage.getItem('selectedClient') || '{}');
+        const payload = {
+          idVisita: id,
+          cliente: selectedClient.text || 'Cliente desconocido'
+};
+
         if (type === 'autorizar') {
           payload.correoUsuario = visita.correoUsuario;
           payload.correoProveedor = visita.correoProveedor;
