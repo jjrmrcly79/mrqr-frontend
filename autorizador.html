@@ -222,35 +222,57 @@
         return card;
       }
       async function handleAction(id, type, card) {
+        // 0. Tomamos referencias a ambos botones
+        const btnAuth = card.querySelector('.btn-autorizar');
+        const btnRej  = card.querySelector('.btn-rechazar');
+
+  // 1. Deshabilitamos ambos y mostramos "procesando"
+        if (btnAuth) {
+        btnAuth.disabled = true;
+        btnAuth.innerHTML = '⏳ Procesando…';
+        }
+        if (btnRej) {
+          btnRej.disabled = true;
+          btnRej.innerHTML = '⏳ Procesando…';
+        }
+
+        // 2. Ahora armar payload y hacer fetch
         const visita = visitasMap.get(id);
         const url = `${BASE}/${type}-visita`;
         const selectedClient = JSON.parse(localStorage.getItem('selectedClient') || '{}');
         const payload = {
           idVisita: id,
-          cliente: selectedClient.text || 'Cliente desconocido'
-};
+          cliente: selectedClient.text || 'Cliente desconocido',
+          correoUsuario: visita.correoUsuario,
+          ...(type === 'autorizar' && { correoProveedor: visita.correoProveedor })
+        };
 
-        if (type === 'autorizar') {
-          payload.correoUsuario = visita.correoUsuario;
-          payload.correoProveedor = visita.correoProveedor;
-        } else {
-          payload.correoUsuario = visita.correoUsuario;
-        }
         try {
-          const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          if (type === 'rechazar') card.remove();
-          else {
+
+          // 3. Movemos o removemos la tarjeta según el tipo
+          if (type === 'rechazar') {
+            card.remove();
+          } else {
             card.classList.add('autorizada');
-            card.querySelector('.btn-autorizar')?.remove();
-            card.querySelector('.btn-rechazar')?.remove();
+            btnAuth.remove();
+            btnRej.remove();
             authEl.appendChild(card);
           }
         } catch (e) {
           console.error(`Error ${type} visita:`, e);
           alert(`Error al ${type} visita`);
+          // 4. En caso de fallo, reactivar botones
+          if (btnAuth) { btnAuth.disabled = false; btnAuth.innerHTML = '<i class="bi bi-check2-circle"></i> Autorizar'; }
+          if (btnRej)  { btnRej.disabled = false;  btnRej.innerHTML = '<i class="bi bi-x-circle"></i> Rechazar'; }
         }
       }
+
       async function cargarVisitas() {
         clearColumns();
         try {
