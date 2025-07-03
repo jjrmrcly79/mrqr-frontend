@@ -125,12 +125,29 @@
       document.getElementById('client-logo').src = getLogoDesdeStorage();
       // Resto de inicialización
       document.getElementById('buscarForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const id = document.getElementById('folio').value.trim();
-        if (id) await mostrarVisita(id);
-      });
-      cargarListas();
-    });
+  e.preventDefault();
+  const form = e.currentTarget;
+  const btnBuscar = form.querySelector('button[type="submit"]');
+  const inputFolio = document.getElementById('folio');
+
+  // 1. Deshabilitar botón e input, y cambiar texto
+  btnBuscar.disabled = true;
+  btnBuscar.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Buscando…';
+  inputFolio.disabled = true;
+
+  try {
+    const id = inputFolio.value.trim();
+    if (id) {
+      await mostrarVisita(id);
+    }
+  } finally {
+    // 2. Restaurar estado pase lo que pase
+    btnBuscar.disabled = false;
+    btnBuscar.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Buscar 🔍';
+    inputFolio.disabled = false;
+  }
+});
+
 
     // Normaliza valores
     function normalize(value) {
