@@ -113,187 +113,195 @@
   </div>
 
   <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Función para cargar logo dinámico
-    function getLogoDesdeStorage() {
-      const saved = JSON.parse(localStorage.getItem('selectedClient') || 'null');
-      return saved ? logos/${saved.value}.png : 'logos/Logo1.png';
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      // Ajustar logo en header
-      document.getElementById('client-logo').src = getLogoDesdeStorage();
-      // Resto de inicialización
-      document.getElementById('buscarForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const form = e.currentTarget;
-  const btnBuscar = form.querySelector('button[type="submit"]');
-  const inputFolio = document.getElementById('folio');
-
-  // 1. Deshabilitar botón e input, y cambiar texto
-  btnBuscar.disabled = true;
-  btnBuscar.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Buscando…';
-  inputFolio.disabled = true;
-
-  try {
-    const id = inputFolio.value.trim();
-    if (id) {
-      await mostrarVisita(id);
-    }
-  } finally {
-    // 2. Restaurar estado pase lo que pase
-    btnBuscar.disabled = false;
-    btnBuscar.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Buscar 🔍';
-    inputFolio.disabled = false;
-  }
-});
-
-
-    // Normaliza valores
-    function normalize(value) {
-      let s = String(value || '').trim();
-      if (s.startsWith('=')) s = s.slice(1);
-      return s.trim();
-    }
-
-    // Registrar entrada o salida
-    // Registrar entrada o salida
-async function registrarAcceso(id, tipo) {
-  // 0. Deshabilitamos ambos botones y mostramos "procesando…"
-  const btnEntrada = document.getElementById('actionBtn');
-  const btnSalida  = document.getElementById('exitBtn');
-  if (btnEntrada) {
-    btnEntrada.disabled = true;
-    btnEntrada.innerHTML = '⏳ Procesando…';
-  }
-  if (btnSalida) {
-    btnSalida.disabled = true;
-    btnSalida.innerHTML = '⏳ Procesando…';
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Función para cargar logo dinámico
+  function getLogoDesdeStorage() {
+    const saved = JSON.parse(localStorage.getItem('selectedClient') || 'null');
+    return saved ? `logos/${saved.value}.png` : 'logos/Logo1.png';
   }
 
-  try {
-    const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/registro-acceso', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idVisita: id, tipo })
-    });
-    if (!res.ok) throw new Error(HTTP ${res.status});
-    const { mensaje } = await res.json();
+  // Espera a que el DOM esté listo
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1) Ajustar logo en header
+    document.getElementById('client-logo').src = getLogoDesdeStorage();
 
-    // Limpiar y recargar
-    document.getElementById('folio').value = '';
-    document.getElementById('resultadoVisita').innerHTML = '';
-    await cargarListas();
-    alert(mensaje);
+    // 2) Listener del formulario de búsqueda
+    document.getElementById('buscarForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const btnBuscar = form.querySelector('button[type="submit"]');
+      const inputFolio = document.getElementById('folio');
 
-  } catch (err) {
-    console.error('Error registrarAcceso:', err);
-    alert('Error al registrar ' + tipo);
-    // 4. Si falla, reactivar botones y restaurar texto
-    if (btnEntrada) {
-      btnEntrada.disabled = false;
-      btnEntrada.innerHTML = '<i class="bi bi-door-open"></i> Registrar entrada 🚪';
-    }
-    if (btnSalida) {
-      btnSalida.disabled = false;
-      btnSalida.innerHTML = '<i class="bi bi-door-closed"></i> Registrar salida 🚪';
-    }
-  }
-}
+      // 2.1) Deshabilitar botón e input, y cambiar texto
+      btnBuscar.disabled = true;
+      btnBuscar.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Buscando…';
+      inputFolio.disabled = true;
 
-
-    // Mostrar detalles de visita
-    async function mostrarVisita(id) {
-      const cont = document.getElementById('resultadoVisita');
-      cont.innerHTML = <div class="alert alert-secondary">Cargando <strong>${id}</strong>…</div>;
       try {
-        const res = await fetch(https://jjrmrcly.app.n8n.cloud/webhook/buscar-visita?id=${encodeURIComponent(id)});
-        if (!res.ok) throw new Error(HTTP ${res.status});
-        const data = await res.json();
-        const statusRaw = normalize(data.status || data.Status);
-        const status = statusRaw.toLowerCase();
-        if (status === 'en planta') {
-          cont.innerHTML = 
-            <div class="card border-success mb-4 shadow-sm">
-              <div class="card-header bg-success text-white">
-                <i class="bi bi-door-closed"></i> Salida de Visita
-              </div>
-              <div class="card-body">
-                <p>La visita <strong>${id}</strong> ya está en planta.</p>
-                <button id="exitBtn" class="btn btn-dark">
-                  <i class="bi bi-door-closed"></i> Registrar salida 🚪
-                </button>
-              </div>
-            </div>;
-          document.getElementById('exitBtn').onclick = () => registrarAcceso(id, 'salida');
-          return;
+        // 2.2) Refrescar listas
+        await cargarListas();
+        // 2.3) Mostrar detalle de la visita
+        const id = inputFolio.value.trim();
+        if (id) {
+          await mostrarVisita(id);
         }
-        const nombre = normalize(data.nombre);
-        const placas = normalize(data.placas);
-        const fecha = normalize(data.fecha);
-        const hora = normalize(data.hora);
-        cont.innerHTML = 
-          <div class="card border-primary mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-              <i class="bi bi-card-list"></i> Detalles de Visita
+      } finally {
+        // 2.4) Restaurar estado siempre
+        btnBuscar.disabled = false;
+        btnBuscar.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Buscar 🔍';
+        inputFolio.disabled = false;
+      }
+    });
+
+    // 3) Cargar lista de autorizadas al iniciar
+    cargarListas();
+  });
+
+  // Normaliza valores de celdas
+  function normalize(value) {
+    let s = String(value || '').trim();
+    if (s.startsWith('=')) s = s.slice(1);
+    return s.trim();
+  }
+
+  // Carga y renderiza listas
+  async function cargarListas() {
+    try {
+      const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/visitas-pendientes');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arr = await res.json();
+      const autorizadas = arr.filter(v => normalize(v.status || v.Status).toLowerCase() === 'autorizada');
+      const enPlanta    = arr.filter(v => normalize(v.status || v.Status).toLowerCase() === 'en planta');
+      renderList('listaPendientes', autorizadas, 'entrada');
+      renderList('listaActivos',    enPlanta,    'salida');
+    } catch (err) {
+      console.error('Error cargarListas:', err);
+      document.getElementById('listaPendientes').innerHTML = `<div class="text-danger">Error al cargar autorizadas.</div>`;
+      document.getElementById('listaActivos').innerHTML    = `<div class="text-danger">Error al cargar en planta.</div>`;
+    }
+  }
+
+  // Render genérico de listas
+  function renderList(containerId, items, actionType) {
+    const list = document.getElementById(containerId);
+    list.innerHTML = items.length ? '' : `<div class="text-muted">No hay visitas.</div>`;
+    items.forEach(v => {
+      const id     = normalize(v.Id_Visita || v.idVisita);
+      const nombre = normalize(v.nombre);
+      const btn    = document.createElement('button');
+      btn.type     = 'button';
+      btn.className= 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+      btn.innerHTML = `
+        <div>
+          <i class="bi bi-upc-scan me-2"></i><strong>${id}</strong><br>
+          <small>${nombre}</small>
+        </div>
+        <i class="bi ${actionType==='entrada'?'bi-door-open':'bi-door-closed'}"></i>
+      `;
+      btn.onclick = () => mostrarVisita(id);
+      list.appendChild(btn);
+    });
+  }
+
+  // Mostrar detalle de una visita
+  async function mostrarVisita(id) {
+    const cont = document.getElementById('resultadoVisita');
+    cont.innerHTML = `<div class="alert alert-secondary">Cargando <strong>${id}</strong>…</div>`;
+    try {
+      const res = await fetch(`https://jjrmrcly.app.n8n.cloud/webhook/buscar-visita?id=${encodeURIComponent(id)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const statusRaw = normalize(data.status || data.Status);
+      const status    = statusRaw.toLowerCase();
+
+      if (status === 'en planta') {
+        cont.innerHTML = `
+          <div class="card border-success mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+              <i class="bi bi-door-closed"></i> Salida de Visita
             </div>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item"><strong><i class="bi bi-person"></i> Nombre:</strong> ${nombre}</li>
-              <li class="list-group-item"><strong><i class="bi bi-truck"></i> Unidad:</strong> ${placas}</li>
-              <li class="list-group-item"><strong><i class="bi bi-calendar-event"></i> Fecha:</strong> ${fecha} <i class="bi bi-clock"></i> ${hora}</li>
-              <li class="list-group-item"><strong><i class="bi bi-info-circle"></i> Status:</strong> ${statusRaw}</li>
-            </ul>
-            <div class="card-body text-end">
-              <button id="actionBtn" class="btn btn-success">
-                <i class="bi bi-door-open"></i> Registrar entrada 🚪
+            <div class="card-body">
+              <p>La visita <strong>${id}</strong> ya está en planta.</p>
+              <button id="exitBtn" class="btn btn-dark">
+                <i class="bi bi-door-closed"></i> Registrar salida 🚪
               </button>
             </div>
-          </div>;
-        document.getElementById('actionBtn').onclick = () => registrarAcceso(id, 'entrada');
-      } catch (err) {
-        console.error('Error mostrarVisita:', err);
-        cont.innerHTML = <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> No se encontró la visita <strong>${id}</strong>.</div>;
-      }
-    }
-
-    // Cargar y renderizar listas
-    async function cargarListas() {
-      try {
-        const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/visitas-pendientes');
-        if (!res.ok) throw new Error(HTTP ${res.status});
-        const arr = await res.json();
-        const autorizadas = arr.filter(v => normalize(v.status || v.Status).toLowerCase() === 'autorizada');
-        const enPlanta = arr.filter(v => normalize(v.status || v.Status).toLowerCase() === 'en planta');
-        renderList('listaPendientes', autorizadas, 'entrada');
-        renderList('listaActivos', enPlanta, 'salida');
-      } catch (err) {
-        console.error('Error cargarListas:', err);
-        document.getElementById('listaPendientes').innerHTML = <div class="text-danger">Error al cargar autorizadas.</div>;
-        document.getElementById('listaActivos').innerHTML = <div class="text-danger">Error al cargar en planta.</div>;
-      }
-    }
-
-    // Renderizar lista genérica
-    function renderList(containerId, items, actionType) {
-      const list = document.getElementById(containerId);
-      list.innerHTML = items.length ? '' : <div class="text-muted">No hay visitas.</div>;
-      items.forEach(v => {
-        const id = normalize(v.Id_Visita || v.idVisita);
-        const nombre = normalize(v.nombre);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
-        btn.innerHTML = 
-          <div>
-            <i class="bi bi-upc-scan me-2"></i><strong>${id}</strong><br>
-            <small>${nombre}</small>
           </div>
-          <i class="bi ${actionType==='entrada'?'bi-door-open':'bi-door-closed'}"></i>
-        ;
-        btn.onclick = () => mostrarVisita(id);
-        list.appendChild(btn);
-      });
+        `;
+        document.getElementById('exitBtn').onclick = () => registrarAcceso(id, 'salida');
+        return;
+      }
+
+      const nombre = normalize(data.nombre);
+      const placas = normalize(data.placas);
+      const fecha  = normalize(data.fecha);
+      const hora   = normalize(data.hora);
+
+      cont.innerHTML = `
+        <div class="card border-primary mb-4 shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <i class="bi bi-card-list"></i> Detalles de Visita
+          </div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item"><strong><i class="bi bi-person"></i> Nombre:</strong> ${nombre}</li>
+            <li class="list-group-item"><strong><i class="bi bi-truck"></i> Unidad:</strong> ${placas}</li>
+            <li class="list-group-item"><strong><i class="bi bi-calendar-event"></i> Fecha:</strong> ${fecha} <i class="bi bi-clock"></i> ${hora}</li>
+            <li class="list-group-item"><strong><i class="bi bi-info-circle"></i> Status:</strong> ${statusRaw}</li>
+          </ul>
+          <div class="card-body text-end">
+            <button id="actionBtn" class="btn btn-success">
+              <i class="bi bi-door-open"></i> Registrar entrada 🚪
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById('actionBtn').onclick = () => registrarAcceso(id, 'entrada');
+    } catch (err) {
+      console.error('Error mostrarVisita:', err);
+      cont.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> No se encontró la visita <strong>${id}</strong>.</div>`;
     }
-  </script>
+  }
+
+  // Registrar entrada o salida
+  async function registrarAcceso(id, tipo) {
+    const btnEntrada = document.getElementById('actionBtn');
+    const btnSalida  = document.getElementById('exitBtn');
+    if (btnEntrada) {
+      btnEntrada.disabled = true;
+      btnEntrada.innerHTML = '⏳ Procesando…';
+    }
+    if (btnSalida) {
+      btnSalida.disabled = true;
+      btnSalida.innerHTML = '⏳ Procesando…';
+    }
+
+    try {
+      const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/registro-acceso', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idVisita: id, tipo })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { mensaje } = await res.json();
+
+      document.getElementById('folio').value = '';
+      document.getElementById('resultadoVisita').innerHTML = '';
+      await cargarListas();
+      alert(mensaje);
+    } catch (err) {
+      console.error('Error registrarAcceso:', err);
+      alert('Error al registrar ' + tipo);
+      if (btnEntrada) {
+        btnEntrada.disabled = false;
+        btnEntrada.innerHTML = '<i class="bi bi-door-open"></i> Registrar entrada 🚪';
+      }
+      if (btnSalida) {
+        btnSalida.disabled = false;
+        btnSalida.innerHTML = '<i class="bi bi-door-closed"></i> Registrar salida 🚪';
+      }
+    }
+  }
+</script>
 </body>
 </html>
