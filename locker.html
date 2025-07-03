@@ -15,21 +15,18 @@
       font-family: 'Montserrat', sans-serif;
     }
     .container {
-      max-width: 800px;
+      max-width: 1200px;
+      width: 95%;
       margin: 40px auto;
       background: rgba(255, 255, 255, 0.9);
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    header img {
-      height: 60px;
-      margin-bottom: 20px;
-    }
     .iframe-container {
       position: relative;
       width: 100%;
-      padding-bottom: 56.25%; /* 16:9 */
+      padding-bottom: 75%; /* 4:3 para más altura */
       margin-bottom: 20px;
     }
     .iframe-container iframe {
@@ -40,24 +37,9 @@
       height: 100%;
       border: none;
     }
-    .btn-secondary {
-      padding: 12px 20px;
-      font-size: 1rem;
-      border-radius: 8px;
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      transition: transform 0.1s ease-in-out;
-    }
-    .btn-secondary:hover {
-      transform: scale(1.03);
-    }
-    .disclaimer {
-      margin-top: 40px;
-      text-align: center;
-      font-size: 0.8rem;
-      color: #888;
-    }
+    /* resto de estilos… */
   </style>
+  
 </head>
 <body>
   <div class="container">
