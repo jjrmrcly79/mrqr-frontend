@@ -57,7 +57,7 @@
       <h2 class="mb-4">Registro de Visita</h2>
     </header>
 
-    <form action="https://jjrmrcly.app.n8n.cloud/webhook/02f58aa2-dec3-4f85-ad44-d47ea23071f7" method="POST">
+    <form id="visitaForm" action="https://jjrmrcly.app.n8n.cloud/webhook/02f58aa2-dec3-4f85-ad44-d47ea23071f7" method="POST">
       <div class="mb-3">
         <label class="form-label">Nombre del proveedor</label>
         <select class="form-select" name="nombreProveedor" id="proveedorSelect" required disabled>
@@ -67,7 +67,7 @@
 
       <div class="mb-3">
         <label class="form-label">Dirección del proveedor</label>
-        <input type="text" class="form-control" id="direccionProveedor" readonly>
+        <input type="text" name="direccionProveedor" class="form-control" id="direccionProveedor" readonly>
       </div>
 
       <div class="mb-3">
@@ -77,27 +77,27 @@
 
       <div class="mb-3">
         <label class="form-label">Correo del proveedor</label>
-        <input type="email" class="form-control" name="correoProveedor" required>
+        <input type="email" name="correoProveedor" class="form-control" required>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Fecha de visita</label>
-        <input type="date" class="form-control" name="fechaVisita" id="fechaVisita" required>
+        <input type="date" name="fechaVisita" id="fechaVisita" class="form-control" required>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Hora de visita</label>
-        <input type="time" class="form-control" name="horaVisita" required>
+        <input type="time" name="horaVisita" class="form-control" required>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Área o Departamento</label>
-        <input type="text" class="form-control" name="motivoVisita">
+        <input type="text" name="motivoVisita" class="form-control">
       </div>
 
       <div class="mb-3">
         <label class="form-label">Tu correo electrónico</label>
-        <input type="email" class="form-control" name="correoUsuario" required>
+        <input type="email" name="correoUsuario" class="form-control" required>
       </div>
 
       <button type="submit" class="btn btn-primary w-100">📩 Enviar solicitud</button>
@@ -108,7 +108,7 @@
     </div>
 
     <div class="disclaimer">
-      ⚠️ Este formulario es parte de una demostración interna. Información confidencial. Prohibida su reproducción.
+      ⚠️ Este formulario es parte de una demostración interna. Prohibida su reproducción.
     </div>
   </div>
 
@@ -140,16 +140,12 @@
       return saved?.text || null;
     }
 
-    
-
     function getLogoDesdeStorage() {
       const saved = JSON.parse(localStorage.getItem("selectedClient") || "null");
-        // Si hay algo guardado, uso saved.value; si no, vuelvo al logo por defecto
       return saved
         ? `logos/${saved.value}.png`
         : "logos/Logo1.png";
     }
-
 
     async function cargarProveedores() {
       const cliente = getClienteDesdeStorage();
@@ -157,9 +153,7 @@
 
       try {
         const res = await fetch("https://corsproxy.io/?https://jjrmrcly.app.n8n.cloud/webhook/lista-proveedores");
-        const text = await res.text();
-        const data = JSON.parse(text);
-
+        const data = await res.json();
         proveedoresData = data;
 
         const filtrados = cliente
@@ -167,10 +161,9 @@
           : data;
 
         select.innerHTML = "";
-
         if (filtrados.length === 0) {
           const option = document.createElement("option");
-          option.textContent = "❌ No hay proveedores disponibles para este cliente.";
+          option.textContent = "❌ No hay proveedores disponibles.";
           option.disabled = true;
           option.selected = true;
           select.appendChild(option);
@@ -188,92 +181,74 @@
             select.appendChild(option);
           });
         }
-
         select.disabled = false;
       } catch (err) {
         console.error("Error cargando proveedores:", err);
-        select.innerHTML = '<option disabled selected>Error al cargar proveedores.</option>';
       }
     }
-
-    document.getElementById("proveedorSelect").addEventListener("change", function () {
-      const nombreSeleccionado = this.value;
-      const proveedor = proveedoresData.find(p => p.nombre === nombreSeleccionado);
-
-      const dirInput = document.getElementById("direccionProveedor");
-      dirInput.value = proveedor?.direccion || "";
-      dirInput.classList.add("highlight");
-
-      if (!proveedor || !proveedor.direccion) {
-        initMap(); // Reinicia el mapa si no hay proveedor válido
-        return;
-      }
-
-      updateMapByAddress(proveedor.direccion);
-    });
 
     window.addEventListener("DOMContentLoaded", () => {
       cargarProveedores();
       document.getElementById("logo").src = getLogoDesdeStorage();
       document.getElementById("fechaVisita").value = new Date().toISOString().split("T")[0];
+      initMap();
+
+      const proveedorSelect = document.getElementById("proveedorSelect");
+      proveedorSelect.addEventListener("change", () => {
+        const nombreSeleccionado = proveedorSelect.value;
+        const proveedor = proveedoresData.find(p => p.nombre === nombreSeleccionado);
+        const dirInput = document.getElementById("direccionProveedor");
+        dirInput.value = proveedor?.direccion || "";
+        dirInput.classList.add("highlight");
+        if (proveedor?.direccion) updateMapByAddress(proveedor.direccion);
+      });
+
+      const form = document.getElementById("visitaForm");
+      const container = document.querySelector(".container");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '⏳ Procesando…';
+
+        // 1. Extraer datos
+        const payload = Object.fromEntries(new FormData(form).entries());
+        // 2. Enviar JSON
+        try {
+          const res = await fetch(form.action, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
           });
+          const result = await res.json();
 
-    const form = document.querySelector("form");
-    const container = document.querySelector(".container");
-
-    form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  // 1. Deshabilitar botón y cambiar texto
-      // 0. Capturar y deshabilitar el botón
-  const submitBtn = form.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '⏳ Procesando…';
-  // (Opcional) deshabilitar campos
-  Array.from(form.elements).forEach(el => el.disabled = true);
-
-  try {
-    // 1. Convertir a JSON puro
-    const payload = Object.fromEntries(new FormData(form).entries());
-    // 2. Enviar JSON al Webhook
-    const res = await fetch(form.action, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+          if (result.autorizado === false) {
+            container.innerHTML = `
+              <div class="alert alert-warning mt-5">${result.mensaje}</div>
+              <div class="text-center mt-4">
+                <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
+              </div>`;
+          } else {
+            container.innerHTML = `
+              <div class="alert alert-success mt-5">${result.mensaje || 'Solicitud registrada correctamente.'}</div>
+              <div class="text-center mt-4">
+                <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
+              </div>`;
+          }
+        } catch (err) {
+          console.error(err);
+          // Reactivar botón en error
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '📩 Enviar solicitud';
+          alert('Ocurrió un error. Intenta de nuevo.');
+        }
+      });
     });
-    const result = await res.json();
-
-    if (result.autorizado === false) {
-      container.innerHTML = `
-        <div class="alert alert-warning mt-5">${result.mensaje}</div>
-        <div class="text-center mt-4">
-          <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = `
-      <div class="alert alert-success mt-5">${result.mensaje || 'Solicitud registrada correctamente.'}</div>
-      <div class="text-center mt-4">
-        <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
-      </div>
-    `;
-  } catch (err) {
-    // En caso de error, reactivar el botón para reintento
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '📩 Enviar solicitud';
-    Array.from(form.elements).forEach(el => el.disabled = false);
-    console.error(err);
-    alert('Ocurrió un error. Intenta de nuevo.');
-  }
-});
-
   </script>
-
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-rPfCzPnAzjJA80aMcgned6taca2bSuU&callback=initMap" defer></script>
 </body>
 </html>
+
 
 
 
