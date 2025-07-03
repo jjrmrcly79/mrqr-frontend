@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Locker Studio - MUSASHI</n  >
+  <!-- Google Font Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: url('logos/fondo.png') center center no-repeat;
+      background-size: cover;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    header img {
+      height: 60px;
+      margin-bottom: 20px;
+    }
+    .iframe-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%; /* 16:9 */
+      margin-bottom: 20px;
+    }
+    .iframe-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .btn-secondary {
+      padding: 12px 20px;
+      font-size: 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: transform 0.1s ease-in-out;
+    }
+    .btn-secondary:hover {
+      transform: scale(1.03);
+    }
+    .disclaimer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="text-center">
+      <img id="logo" src="" alt="Logo de MUSASHI" />
+      <h2 class="mb-4">Locker Studio</h2>
+    </header>
+
+    <div class="iframe-container">
+      <iframe 
+        src="https://lookerstudio.google.com/u/2/reporting/6d12a0af-c636-4c69-9931-7a32ecb39ede/page/hrDPF" 
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <div class="text-center">
+      <a href="index.html" class="btn btn-secondary w-100">🔙 Volver al Panel</a>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ Este panel es parte de una demostración interna. Información confidencial. Prohibida su reproducción.
+    </div>
+  </div>
+
+  <!-- Script para logo dinámico -->
+  <script>
+    function getLogoDesdeStorage() {
+      const saved = JSON.parse(localStorage.getItem('selectedClient') || 'null');
+      return saved ? `logos/${saved.value}.png` : 'logos/Logo1.png';
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('logo').src = getLogoDesdeStorage();
+    });
+  </script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
