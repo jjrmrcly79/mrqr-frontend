@@ -140,24 +140,50 @@
     }
 
     // Registrar entrada o salida
-    async function registrarAcceso(id, tipo) {
-      try {
-        const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/registro-acceso', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idVisita: id, tipo })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const { mensaje } = await res.json();
-        document.getElementById('folio').value = '';
-        document.getElementById('resultadoVisita').innerHTML = '';
-        await cargarListas();
-        alert(mensaje);
-      } catch (err) {
-        console.error('Error registrarAcceso:', err);
-        alert('Error al registrar ' + tipo);
-      }
+    // Registrar entrada o salida
+async function registrarAcceso(id, tipo) {
+  // 0. Deshabilitamos ambos botones y mostramos "procesando…"
+  const btnEntrada = document.getElementById('actionBtn');
+  const btnSalida  = document.getElementById('exitBtn');
+  if (btnEntrada) {
+    btnEntrada.disabled = true;
+    btnEntrada.innerHTML = '⏳ Procesando…';
+  }
+  if (btnSalida) {
+    btnSalida.disabled = true;
+    btnSalida.innerHTML = '⏳ Procesando…';
+  }
+
+  try {
+    const res = await fetch('https://jjrmrcly.app.n8n.cloud/webhook/registro-acceso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idVisita: id, tipo })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { mensaje } = await res.json();
+
+    // Limpiar y recargar
+    document.getElementById('folio').value = '';
+    document.getElementById('resultadoVisita').innerHTML = '';
+    await cargarListas();
+    alert(mensaje);
+
+  } catch (err) {
+    console.error('Error registrarAcceso:', err);
+    alert('Error al registrar ' + tipo);
+    // 4. Si falla, reactivar botones y restaurar texto
+    if (btnEntrada) {
+      btnEntrada.disabled = false;
+      btnEntrada.innerHTML = '<i class="bi bi-door-open"></i> Registrar entrada 🚪';
     }
+    if (btnSalida) {
+      btnSalida.disabled = false;
+      btnSalida.innerHTML = '<i class="bi bi-door-closed"></i> Registrar salida 🚪';
+    }
+  }
+}
+
 
     // Mostrar detalles de visita
     async function mostrarVisita(id) {
