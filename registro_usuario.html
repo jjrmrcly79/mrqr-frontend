@@ -225,18 +225,21 @@
   e.preventDefault();
 
   // 1. Deshabilitar botón y cambiar texto
+      // 0. Capturar y deshabilitar el botón
   const submitBtn = form.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
   submitBtn.innerHTML = '⏳ Procesando…';
-
-  // 2. (Opcional) deshabilitar todos los campos
+  // (Opcional) deshabilitar campos
   Array.from(form.elements).forEach(el => el.disabled = true);
 
   try {
-    const formData = new FormData(form);
+    // 1. Convertir a JSON puro
+    const payload = Object.fromEntries(new FormData(form).entries());
+    // 2. Enviar JSON al Webhook
     const res = await fetch(form.action, {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
     const result = await res.json();
 
