@@ -222,32 +222,50 @@
     const container = document.querySelector(".container");
 
     form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  e.preventDefault();
 
-      const formData = new FormData(form);
-      const res = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-      });
+  // 1. Deshabilitar botón y cambiar texto
+  const submitBtn = form.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '⏳ Procesando…';
 
-      const result = await res.json();
-      if (result.autorizado === false) {
-        container.innerHTML = `
-          <div class="alert alert-warning mt-5">${result.mensaje}</div>
-          <div class="text-center mt-4">
-            <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
-          </div>
-        `;
-        return;
-      }
+  // 2. (Opcional) deshabilitar todos los campos
+  Array.from(form.elements).forEach(el => el.disabled = true);
 
+  try {
+    const formData = new FormData(form);
+    const res = await fetch(form.action, {
+      method: "POST",
+      body: formData,
+    });
+    const result = await res.json();
+
+    if (result.autorizado === false) {
       container.innerHTML = `
-        <div class="alert alert-success mt-5">${result.mensaje || 'Solicitud registrada correctamente.'}</div>
+        <div class="alert alert-warning mt-5">${result.mensaje}</div>
         <div class="text-center mt-4">
           <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
         </div>
       `;
-    });
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="alert alert-success mt-5">${result.mensaje || 'Solicitud registrada correctamente.'}</div>
+      <div class="text-center mt-4">
+        <a href="index.html" class="btn btn-secondary">🔙 Volver a Demo</a>
+      </div>
+    `;
+  } catch (err) {
+    // En caso de error, reactivar el botón para reintento
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '📩 Enviar solicitud';
+    Array.from(form.elements).forEach(el => el.disabled = false);
+    console.error(err);
+    alert('Ocurrió un error. Intenta de nuevo.');
+  }
+});
+
   </script>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-rPfCzPnAzjJA80aMcgned6taca2bSuU&callback=initMap" defer></script>
